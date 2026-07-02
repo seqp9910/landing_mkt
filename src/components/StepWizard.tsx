@@ -3,6 +3,8 @@ import type { FormData, TiempoActividad } from '../types/lead';
 import { isCalificado } from '../lib/qualification';
 import { readUTMParams } from '../lib/utm';
 import { supabase } from '../lib/supabase';
+import heroDesktop from '../assets/hero/hero-desktop.jpg';
+import heroMobile from '../assets/hero/hero-mobile.jpg';
 import Logo from './Logo';
 import ProgressBar from './ProgressBar';
 import StepText from './StepText';
@@ -195,13 +197,27 @@ export default function StepWizard() {
   }
 
   return (
-    <div className="min-h-svh w-full flex flex-col bg-[#1A1A2E]">
+    <div className="relative min-h-svh w-full flex flex-col bg-[#1A1A2E] overflow-hidden">
+      <div className="absolute inset-0 z-0" aria-hidden="true">
+        <img
+          src={heroMobile}
+          alt=""
+          className="block md:hidden w-full h-full object-cover object-top blur-lg scale-110 opacity-40"
+        />
+        <img
+          src={heroDesktop}
+          alt=""
+          className="hidden md:block w-full h-full object-cover blur-lg scale-110 opacity-40"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1A1A2E]/70 via-[#1A1A2E]/85 to-[#1A1A2E]" />
+      </div>
+
       {!result && (
-        <div className="px-6 pt-6">
+        <div className="relative z-10 px-6 pt-6">
           <ProgressBar current={currentIndex + 1} total={BASE_STEP_ORDER.length} />
         </div>
       )}
-      <div className="flex-1 flex flex-col justify-center px-6 py-8 max-w-md w-full mx-auto">
+      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 py-8 max-w-md w-full mx-auto">
         <Logo />
 
         {result && <ResultScreen calificado={result.calificado} />}
