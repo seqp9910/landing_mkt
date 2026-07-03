@@ -264,7 +264,7 @@ export default function StepWizard() {
         )}
 
         {!result && stepId === 'celular' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
             <h2 className="flex items-center gap-2 text-white text-2xl font-semibold leading-snug">
               <WhatsAppIcon className="w-6 h-6 text-[#25D366] flex-shrink-0" />
               ¿Cuál es tu número de WhatsApp?

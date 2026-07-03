@@ -20,8 +20,8 @@ export default function StepChoice({ question, options, selected, onSelect, onNe
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-white text-2xl font-semibold leading-snug mb-2">{question}</h2>
+    <div className="flex flex-col gap-3">
+      <h2 className="text-white text-2xl font-semibold leading-snug">{question}</h2>
       <div className="flex flex-col gap-3">
         {options.map((opt) => (
           <button

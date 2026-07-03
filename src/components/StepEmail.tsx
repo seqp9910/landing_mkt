@@ -7,7 +7,7 @@ interface StepEmailProps {
 
 export default function StepEmail({ value, onChange, onNext, error }: StepEmailProps) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3">
       <h2 className="text-white text-2xl font-semibold leading-snug">¿Cuál es tu correo?</h2>
       <input
         type="email"
