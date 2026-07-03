@@ -344,7 +344,12 @@ export default function StepWizard() {
 
         {!result && stepId === 'ciudad' && (
           <div className="flex flex-col gap-3">
-            <h2 className="text-white text-2xl font-semibold leading-snug">¿En qué ciudad vives?</h2>
+            <h2 className="text-white text-2xl font-semibold leading-snug">
+              ¿En qué ciudad trabajas/trabajaste como domiciliario?
+            </h2>
+            <p className="text-white/50 text-sm -mt-1">
+              Si trabajas o trabajaste en varias, coloca la ciudad principal.
+            </p>
             <div className="flex flex-col gap-3">
               {CIUDAD_OPTIONS.map((opt) => (
                 <button
