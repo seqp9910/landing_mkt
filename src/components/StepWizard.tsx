@@ -12,6 +12,7 @@ import StepEmail from './StepEmail';
 import StepChoice from './StepChoice';
 import StepConsent from './StepConsent';
 import ResultScreen from './ResultScreen';
+import WhatsAppIcon from './WhatsAppIcon';
 
 type StepId =
   | 'nombre'
@@ -28,10 +29,29 @@ type StepId =
 const CIUDAD_OPTIONS = [
   { label: 'Bogotá', value: 'Bogotá' },
   { label: 'Medellín', value: 'Medellín' },
+  { label: 'Cali', value: 'Cali' },
+  { label: 'Barranquilla', value: 'Barranquilla' },
+  { label: 'Cartagena', value: 'Cartagena' },
   { label: 'Bucaramanga', value: 'Bucaramanga' },
+  { label: 'Pereira', value: 'Pereira' },
+  { label: 'Manizales', value: 'Manizales' },
+  { label: 'Cúcuta', value: 'Cúcuta' },
+  { label: 'Ibagué', value: 'Ibagué' },
+  { label: 'Santa Marta', value: 'Santa Marta' },
   { label: 'Neiva', value: 'Neiva' },
   { label: 'Villavicencio', value: 'Villavicencio' },
   { label: 'Otra ciudad', value: 'Otra ciudad' },
+];
+
+const COUNTRY_CODES = [
+  { code: '+57', flag: '🇨🇴', country: 'Colombia' },
+  { code: '+52', flag: '🇲🇽', country: 'México' },
+  { code: '+51', flag: '🇵🇪', country: 'Perú' },
+  { code: '+593', flag: '🇪🇨', country: 'Ecuador' },
+  { code: '+58', flag: '🇻🇪', country: 'Venezuela' },
+  { code: '+54', flag: '🇦🇷', country: 'Argentina' },
+  { code: '+56', flag: '🇨🇱', country: 'Chile' },
+  { code: '+1', flag: '🇺🇸', country: 'Estados Unidos' },
 ];
 
 const PLATAFORMA_OPTIONS = [
@@ -83,6 +103,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function StepWizard() {
   const [stepId, setStepId] = useState<StepId>('nombre');
   const [data, setData] = useState<FormData>(initialFormData);
+  const [indicativo, setIndicativo] = useState(COUNTRY_CODES[0].code);
   const [error, setError] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ calificado: boolean } | null>(null);
@@ -170,7 +191,7 @@ export default function StepWizard() {
     const { error: insertError } = await supabase.from('landing_rappitenderos').insert({
       nombre: data.nombre.trim(),
       email: data.email.trim(),
-      celular: data.celular.trim(),
+      celular: `${indicativo}${data.celular.trim()}`,
       ciudad: data.ciudad,
       ciudad_otra: data.ciudad === 'Otra ciudad' ? data.ciudad_otra.trim() : null,
       plataforma: data.plataforma,
@@ -243,16 +264,44 @@ export default function StepWizard() {
         )}
 
         {!result && stepId === 'celular' && (
-          <StepText
-            question="¿Cuál es tu número de WhatsApp?"
-            value={data.celular}
-            onChange={(v) => setData({ ...data, celular: v.replace(/\D/g, '').slice(0, 10) })}
-            onNext={handleCelularNext}
-            error={error}
-            placeholder="3001234567"
-            inputMode="numeric"
-            maxLength={10}
-          />
+          <div className="flex flex-col gap-6">
+            <h2 className="flex items-center gap-2 text-white text-2xl font-semibold leading-snug">
+              <WhatsAppIcon className="w-6 h-6 text-[#25D366] flex-shrink-0" />
+              ¿Cuál es tu número de WhatsApp?
+            </h2>
+            <div className="flex gap-2">
+              <select
+                value={indicativo}
+                onChange={(e) => setIndicativo(e.target.value)}
+                aria-label="Indicativo de país"
+                className="bg-white/10 border border-white/20 rounded-xl px-2 text-white text-lg focus:outline-none focus:border-[#E84C88] transition"
+              >
+                {COUNTRY_CODES.map((c) => (
+                  <option key={c.code} value={c.code} className="bg-[#1A1A2E]">
+                    {c.flag} {c.code}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={data.celular}
+                onChange={(e) => setData({ ...data, celular: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                onKeyDown={(e) => e.key === 'Enter' && handleCelularNext()}
+                placeholder="3001234567"
+                maxLength={10}
+                className="flex-1 min-w-0 bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white text-lg placeholder-white/40 focus:outline-none focus:border-[#E84C88] transition"
+                autoFocus
+              />
+            </div>
+            {error && <p className="text-[#E84C88] text-sm">{error}</p>}
+            <button
+              onClick={handleCelularNext}
+              className="w-full bg-[#E84C88] text-white font-semibold text-lg rounded-xl py-4 mt-2 active:opacity-80 transition"
+            >
+              Continuar
+            </button>
+          </div>
         )}
 
         {!result && stepId === 'ciudad' && (
