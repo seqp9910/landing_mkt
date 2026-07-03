@@ -20,7 +20,6 @@ type StepId =
   | 'celular'
   | 'ciudad'
   | 'plataforma'
-  | 'plataforma_otra'
   | 'cuenta_propia'
   | 'tiempo_actividad'
   | 'consent';
@@ -108,7 +107,7 @@ export default function StepWizard() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ calificado: boolean } | null>(null);
 
-  const currentIndex = BASE_STEP_ORDER.indexOf(stepId === 'plataforma_otra' ? 'plataforma' : stepId);
+  const currentIndex = BASE_STEP_ORDER.indexOf(stepId);
 
   function goTo(id: StepId) {
     setError(undefined);
@@ -130,11 +129,8 @@ export default function StepWizard() {
       case 'plataforma':
         setStepId('ciudad');
         break;
-      case 'plataforma_otra':
-        setStepId('plataforma');
-        break;
       case 'cuenta_propia':
-        setStepId(data.plataforma === 'Otra' ? 'plataforma_otra' : 'plataforma');
+        setStepId('plataforma');
         break;
       case 'tiempo_actividad':
         setStepId('cuenta_propia');
@@ -163,12 +159,20 @@ export default function StepWizard() {
     goTo('plataforma');
   }
 
-  function afterPlataforma() {
-    if (data.plataforma === 'Otra') {
-      goTo('plataforma_otra');
-    } else {
-      goTo('cuenta_propia');
+  function handlePlataformaSelect(value: string) {
+    setError(undefined);
+    setData({ ...data, plataforma: value, plataforma_otra: value === 'Otra' ? data.plataforma_otra : '' });
+    if (value !== 'Otra') {
+      setTimeout(() => goTo('cuenta_propia'), 180);
     }
+  }
+
+  function handlePlataformaNext() {
+    if (data.plataforma === 'Otra' && data.plataforma_otra.trim().length < 2) {
+      setError('Cuéntanos en qué app trabajas.');
+      return;
+    }
+    goTo('cuenta_propia');
   }
 
   function handleNombreNext() {
@@ -193,14 +197,6 @@ export default function StepWizard() {
       return;
     }
     goTo('ciudad');
-  }
-
-  function handlePlataformaOtraNext() {
-    if (data.plataforma_otra.trim().length < 2) {
-      setError('Cuéntanos en qué app trabajas.');
-      return;
-    }
-    goTo('cuenta_propia');
   }
 
   async function handleSubmit() {
@@ -268,7 +264,7 @@ export default function StepWizard() {
           <ProgressBar current={currentIndex + 1} total={BASE_STEP_ORDER.length} />
         </div>
       )}
-      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 py-8 max-w-md w-full mx-auto">
+      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 py-8 max-w-md w-full mx-auto -translate-y-10">
         <Logo />
 
         {!result && stepId !== 'nombre' && (
@@ -388,24 +384,44 @@ export default function StepWizard() {
         )}
 
         {!result && stepId === 'plataforma' && (
-          <StepChoice
-            question="¿En qué app trabajas como domiciliario?"
-            options={PLATAFORMA_OPTIONS}
-            selected={data.plataforma}
-            onSelect={(v) => setData({ ...data, plataforma: v })}
-            onNext={afterPlataforma}
-            error={error}
-          />
-        )}
-
-        {!result && stepId === 'plataforma_otra' && (
-          <StepText
-            question="¿Cuál app?"
-            value={data.plataforma_otra}
-            onChange={(v) => setData({ ...data, plataforma_otra: v })}
-            onNext={handlePlataformaOtraNext}
-            error={error}
-          />
+          <div className="flex flex-col gap-3">
+            <h2 className="text-white text-2xl font-semibold leading-snug">¿En qué app trabajas como domiciliario?</h2>
+            <div className="flex flex-col gap-3">
+              {PLATAFORMA_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handlePlataformaSelect(opt.value)}
+                  className={`w-full text-left px-4 py-4 rounded-xl border text-lg font-medium transition
+                    ${data.plataforma === opt.value
+                      ? 'bg-[#E84C88] border-[#E84C88] text-white'
+                      : 'bg-white/10 border-white/20 text-white active:bg-white/20'
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {data.plataforma === 'Otra' && (
+              <input
+                type="text"
+                value={data.plataforma_otra}
+                onChange={(e) => setData({ ...data, plataforma_otra: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && handlePlataformaNext()}
+                placeholder="Escribe la app"
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white text-lg placeholder-white/40 focus:outline-none focus:border-[#E84C88] transition"
+                autoFocus
+              />
+            )}
+            {error && <p className="text-[#E84C88] text-sm">{error}</p>}
+            {data.plataforma === 'Otra' && (
+              <button
+                onClick={handlePlataformaNext}
+                className="w-full bg-[#E84C88] text-white font-semibold text-lg rounded-xl py-4 mt-2 active:opacity-80 transition"
+              >
+                Continuar
+              </button>
+            )}
+          </div>
         )}
 
         {!result && stepId === 'cuenta_propia' && (
