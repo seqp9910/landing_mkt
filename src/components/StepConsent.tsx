@@ -19,8 +19,9 @@ export default function StepConsent({ accepted, onChange, onSubmit, error, loadi
         />
         <span className="text-white/80 text-base leading-relaxed">
           Autorizo a QPAlliance el tratamiento de mis datos personales conforme a la{' '}
-          {/* TODO: reemplazar "#" por la URL real de la Política de Privacidad antes de publicar la campaña */}
-          <a href="#" className="text-[#E84C88] underline">Política de Privacidad</a>
+          <a href="/privacidad.html" target="_blank" rel="noopener noreferrer" className="text-[#E84C88] underline">
+            Política de Privacidad
+          </a>
           , para ser contactado sobre mi proceso de defensa laboral.
         </span>
       </label>
