@@ -1,4 +1,4 @@
-import qpaLogo from '../assets/logo/qpa-logo.png';
+import qpaLogo from '../assets/logo/qpa-logo-square.png';
 
 export default function Logo() {
   return (
