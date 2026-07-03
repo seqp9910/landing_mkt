@@ -32,7 +32,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const secret = req.headers['x-webhook-secret'];
-    if (secret !== process.env.SUPABASE_WEBHOOK_SECRET) {
+    const normalizedSecret = typeof secret === 'string' ? secret.trim() : secret;
+    const expectedSecret = process.env.SUPABASE_WEBHOOK_SECRET?.trim();
+    if (normalizedSecret !== expectedSecret) {
+      // TEMP DEBUG: remove after root cause confirmed in Vercel logs
+      console.log('[whatsapp-notify] secret check', {
+        receivedLength: normalizedSecret?.length,
+        expectedLength: expectedSecret?.length,
+      });
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
