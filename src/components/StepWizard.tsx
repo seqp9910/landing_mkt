@@ -240,6 +240,8 @@ export default function StepWizard() {
       return;
     }
 
+    window.ttq?.track('CompleteRegistration', { content_name: calificado ? 'calificado' : 'no_calificado' });
+
     setResult({ calificado });
   }
 
