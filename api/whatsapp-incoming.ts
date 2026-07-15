@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
 interface IncomingMessage {
+  id: string;
   from: string;
   type: string;
 }
@@ -77,9 +79,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     if (message && receivingPhoneNumberId === process.env.WHATSAPP_PHONE_NUMBER_ID) {
-      void sendAutoReply(message.from).catch((err) => {
-        console.error('[whatsapp-incoming] auto-reply failed', err);
-      });
+      const supabaseAdmin = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      const { error: dedupeError } = await supabaseAdmin
+        .from('whatsapp_incoming_dedupe')
+        .insert({ message_id: message.id });
+
+      if (dedupeError && dedupeError.code !== '23505') {
+        // Fallo transitorio de DB: no enviamos, para no arriesgar duplicados
+        // si el insert en realidad sí se aplicó pero la respuesta se perdió.
+        console.error('[whatsapp-incoming] dedupe insert failed, skipping send', dedupeError);
+      } else if (!dedupeError) {
+        void sendAutoReply(message.from).catch((err) => {
+          console.error('[whatsapp-incoming] auto-reply failed', err);
+        });
+      }
+      // dedupeError?.code === '23505' => ya procesado, no hacer nada.
     }
 
     return res.status(200).json({ received: true });
