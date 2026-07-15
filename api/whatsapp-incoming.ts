@@ -69,6 +69,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = value?.messages?.[0];
     const receivingPhoneNumberId = value?.metadata?.phone_number_id;
 
+    // TEMP DEBUG: remove after root cause confirmed in Vercel logs
+    console.log('[whatsapp-incoming] phone check', {
+      receivingPhoneNumberId: `[${receivingPhoneNumberId}]`,
+      expected: `[${process.env.WHATSAPP_PHONE_NUMBER_ID}]`,
+      match: receivingPhoneNumberId === process.env.WHATSAPP_PHONE_NUMBER_ID,
+    });
+
     if (message && receivingPhoneNumberId === process.env.WHATSAPP_PHONE_NUMBER_ID) {
       void sendAutoReply(message.from).catch((err) => {
         console.error('[whatsapp-incoming] auto-reply failed', err);
