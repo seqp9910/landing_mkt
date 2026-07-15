@@ -19,9 +19,7 @@ type StepId =
   | 'email'
   | 'celular'
   | 'ciudad'
-  | 'ciudad_otra'
   | 'plataforma'
-  | 'plataforma_otra'
   | 'cuenta_propia'
   | 'tiempo_actividad'
   | 'consent';
@@ -51,6 +49,7 @@ const COUNTRY_CODES = [
   { code: '+58', flag: '🇻🇪', country: 'Venezuela' },
   { code: '+54', flag: '🇦🇷', country: 'Argentina' },
   { code: '+56', flag: '🇨🇱', country: 'Chile' },
+  { code: '+34', flag: '🇪🇸', country: 'España' },
   { code: '+1', flag: '🇺🇸', country: 'Estados Unidos' },
 ];
 
@@ -108,29 +107,72 @@ export default function StepWizard() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ calificado: boolean } | null>(null);
 
-  const currentIndex = BASE_STEP_ORDER.indexOf(
-    stepId === 'ciudad_otra' ? 'ciudad' : stepId === 'plataforma_otra' ? 'plataforma' : stepId,
-  );
+  const currentIndex = BASE_STEP_ORDER.indexOf(stepId);
 
   function goTo(id: StepId) {
     setError(undefined);
     setStepId(id);
   }
 
-  function afterCiudad() {
-    if (data.ciudad === 'Otra ciudad') {
-      goTo('ciudad_otra');
-    } else {
-      goTo('plataforma');
+  function goBack() {
+    setError(undefined);
+    switch (stepId) {
+      case 'email':
+        setStepId('nombre');
+        break;
+      case 'celular':
+        setStepId('email');
+        break;
+      case 'ciudad':
+        setStepId('celular');
+        break;
+      case 'plataforma':
+        setStepId('ciudad');
+        break;
+      case 'cuenta_propia':
+        setStepId('plataforma');
+        break;
+      case 'tiempo_actividad':
+        setStepId('cuenta_propia');
+        break;
+      case 'consent':
+        setStepId('tiempo_actividad');
+        break;
+      default:
+        break;
     }
   }
 
-  function afterPlataforma() {
-    if (data.plataforma === 'Otra') {
-      goTo('plataforma_otra');
-    } else {
-      goTo('cuenta_propia');
+  function handleCiudadSelect(value: string) {
+    setError(undefined);
+    setData({ ...data, ciudad: value, ciudad_otra: value === 'Otra ciudad' ? data.ciudad_otra : '' });
+    if (value !== 'Otra ciudad') {
+      setTimeout(() => goTo('plataforma'), 180);
     }
+  }
+
+  function handleCiudadNext() {
+    if (data.ciudad === 'Otra ciudad' && data.ciudad_otra.trim().length < 2) {
+      setError('Cuéntanos en qué ciudad vives.');
+      return;
+    }
+    goTo('plataforma');
+  }
+
+  function handlePlataformaSelect(value: string) {
+    setError(undefined);
+    setData({ ...data, plataforma: value, plataforma_otra: value === 'Otra' ? data.plataforma_otra : '' });
+    if (value !== 'Otra') {
+      setTimeout(() => goTo('cuenta_propia'), 180);
+    }
+  }
+
+  function handlePlataformaNext() {
+    if (data.plataforma === 'Otra' && data.plataforma_otra.trim().length < 2) {
+      setError('Cuéntanos en qué app trabajas.');
+      return;
+    }
+    goTo('cuenta_propia');
   }
 
   function handleNombreNext() {
@@ -155,22 +197,6 @@ export default function StepWizard() {
       return;
     }
     goTo('ciudad');
-  }
-
-  function handleCiudadOtraNext() {
-    if (data.ciudad_otra.trim().length < 2) {
-      setError('Cuéntanos en qué ciudad vives.');
-      return;
-    }
-    goTo('plataforma');
-  }
-
-  function handlePlataformaOtraNext() {
-    if (data.plataforma_otra.trim().length < 2) {
-      setError('Cuéntanos en qué app trabajas.');
-      return;
-    }
-    goTo('cuenta_propia');
   }
 
   async function handleSubmit() {
@@ -214,6 +240,8 @@ export default function StepWizard() {
       return;
     }
 
+    window.ttq?.track('CompleteRegistration', { content_name: calificado ? 'calificado' : 'no_calificado' });
+
     setResult({ calificado });
   }
 
@@ -238,8 +266,20 @@ export default function StepWizard() {
           <ProgressBar current={currentIndex + 1} total={BASE_STEP_ORDER.length} />
         </div>
       )}
-      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 py-8 max-w-md w-full mx-auto">
+      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 py-8 max-w-md w-full mx-auto -translate-y-10">
         <Logo />
+
+        {!result && stepId !== 'nombre' && (
+          <button
+            onClick={goBack}
+            aria-label="Volver a la pregunta anterior"
+            className="self-start mb-3 -ml-1 p-1 text-white/60 active:text-white transition"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
 
         {result && <ResultScreen calificado={result.calificado} />}
 
@@ -264,7 +304,7 @@ export default function StepWizard() {
         )}
 
         {!result && stepId === 'celular' && (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
             <h2 className="flex items-center gap-2 text-white text-2xl font-semibold leading-snug">
               <WhatsAppIcon className="w-6 h-6 text-[#25D366] flex-shrink-0" />
               ¿Cuál es tu número de WhatsApp?
@@ -305,45 +345,90 @@ export default function StepWizard() {
         )}
 
         {!result && stepId === 'ciudad' && (
-          <StepChoice
-            question="¿En qué ciudad vives?"
-            options={CIUDAD_OPTIONS}
-            selected={data.ciudad}
-            onSelect={(v) => setData({ ...data, ciudad: v })}
-            onNext={afterCiudad}
-            error={error}
-          />
-        )}
-
-        {!result && stepId === 'ciudad_otra' && (
-          <StepText
-            question="¿Cuál ciudad?"
-            value={data.ciudad_otra}
-            onChange={(v) => setData({ ...data, ciudad_otra: v })}
-            onNext={handleCiudadOtraNext}
-            error={error}
-          />
+          <div className="flex flex-col gap-3">
+            <h2 className="text-white text-2xl font-semibold leading-snug">
+              ¿En qué ciudad trabajas/trabajaste como domiciliario?
+            </h2>
+            <p className="text-white/50 text-sm -mt-1">
+              Si trabajas o trabajaste en varias, coloca la ciudad principal.
+            </p>
+            <div className="flex flex-col gap-3">
+              {CIUDAD_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleCiudadSelect(opt.value)}
+                  className={`w-full text-left px-4 py-4 rounded-xl border text-lg font-medium transition
+                    ${data.ciudad === opt.value
+                      ? 'bg-[#E84C88] border-[#E84C88] text-white'
+                      : 'bg-white/10 border-white/20 text-white active:bg-white/20'
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {data.ciudad === 'Otra ciudad' && (
+              <input
+                type="text"
+                value={data.ciudad_otra}
+                onChange={(e) => setData({ ...data, ciudad_otra: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && handleCiudadNext()}
+                placeholder="Escribe tu ciudad"
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white text-lg placeholder-white/40 focus:outline-none focus:border-[#E84C88] transition"
+                autoFocus
+              />
+            )}
+            {error && <p className="text-[#E84C88] text-sm">{error}</p>}
+            {data.ciudad === 'Otra ciudad' && (
+              <button
+                onClick={handleCiudadNext}
+                className="w-full bg-[#E84C88] text-white font-semibold text-lg rounded-xl py-4 mt-2 active:opacity-80 transition"
+              >
+                Continuar
+              </button>
+            )}
+          </div>
         )}
 
         {!result && stepId === 'plataforma' && (
-          <StepChoice
-            question="¿En qué app trabajas como domiciliario?"
-            options={PLATAFORMA_OPTIONS}
-            selected={data.plataforma}
-            onSelect={(v) => setData({ ...data, plataforma: v })}
-            onNext={afterPlataforma}
-            error={error}
-          />
-        )}
-
-        {!result && stepId === 'plataforma_otra' && (
-          <StepText
-            question="¿Cuál app?"
-            value={data.plataforma_otra}
-            onChange={(v) => setData({ ...data, plataforma_otra: v })}
-            onNext={handlePlataformaOtraNext}
-            error={error}
-          />
+          <div className="flex flex-col gap-3">
+            <h2 className="text-white text-2xl font-semibold leading-snug">¿En qué app trabajas como domiciliario?</h2>
+            <div className="flex flex-col gap-3">
+              {PLATAFORMA_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handlePlataformaSelect(opt.value)}
+                  className={`w-full text-left px-4 py-4 rounded-xl border text-lg font-medium transition
+                    ${data.plataforma === opt.value
+                      ? 'bg-[#E84C88] border-[#E84C88] text-white'
+                      : 'bg-white/10 border-white/20 text-white active:bg-white/20'
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {data.plataforma === 'Otra' && (
+              <input
+                type="text"
+                value={data.plataforma_otra}
+                onChange={(e) => setData({ ...data, plataforma_otra: e.target.value })}
+                onKeyDown={(e) => e.key === 'Enter' && handlePlataformaNext()}
+                placeholder="Escribe la app"
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-4 text-white text-lg placeholder-white/40 focus:outline-none focus:border-[#E84C88] transition"
+                autoFocus
+              />
+            )}
+            {error && <p className="text-[#E84C88] text-sm">{error}</p>}
+            {data.plataforma === 'Otra' && (
+              <button
+                onClick={handlePlataformaNext}
+                className="w-full bg-[#E84C88] text-white font-semibold text-lg rounded-xl py-4 mt-2 active:opacity-80 transition"
+              >
+                Continuar
+              </button>
+            )}
+          </div>
         )}
 
         {!result && stepId === 'cuenta_propia' && (
