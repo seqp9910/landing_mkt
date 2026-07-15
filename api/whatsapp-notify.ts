@@ -86,6 +86,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             language: { code: 'es_CO' },
             components: [
               {
+                type: 'header',
+                parameters: [
+                  {
+                    type: 'video',
+                    video: { link: process.env.WHATSAPP_TEMPLATE_VIDEO_URL },
+                  },
+                ],
+              },
+              {
                 type: 'body',
                 parameters: [{ type: 'text', text: record.nombre }],
               },
