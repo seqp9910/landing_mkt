@@ -10,6 +10,7 @@ export interface FormData {
   plataforma_otra: string;
   cuenta_propia: boolean | null;
   tiempo_actividad: TiempoActividad | null;
+  codigo_promotor: string;
   acepta_tratamiento_datos: boolean;
 }
 

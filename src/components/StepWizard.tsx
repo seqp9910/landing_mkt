@@ -94,6 +94,7 @@ const initialFormData: FormData = {
   plataforma_otra: '',
   cuenta_propia: null,
   tiempo_actividad: null,
+  codigo_promotor: '',
   acepta_tratamiento_datos: false,
 };
 
@@ -224,6 +225,7 @@ export default function StepWizard() {
       plataforma_otra: data.plataforma === 'Otra' ? data.plataforma_otra.trim() : null,
       cuenta_propia: data.cuenta_propia,
       tiempo_actividad: data.tiempo_actividad,
+      codigo_promotor: data.codigo_promotor || null,
       calificado,
       utm_source: utm.utm_source,
       utm_medium: utm.utm_medium,
@@ -457,6 +459,8 @@ export default function StepWizard() {
           <StepConsent
             accepted={data.acepta_tratamiento_datos}
             onChange={(v) => setData({ ...data, acepta_tratamiento_datos: v })}
+            codigoPromotor={data.codigo_promotor}
+            onCodigoPromotorChange={(v) => setData({ ...data, codigo_promotor: v })}
             onSubmit={handleSubmit}
             error={error}
             loading={loading}

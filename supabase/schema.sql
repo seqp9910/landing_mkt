@@ -33,6 +33,9 @@ create table public.landing_rappitenderos (
   -- Seguimiento comercial posterior
   status text not null default 'nuevo',
 
+  -- Código de promotor (opcional, P1-P10)
+  codigo_promotor text,
+
   -- Cumplimiento de datos personales
   acepta_tratamiento_datos boolean not null default false
 );
